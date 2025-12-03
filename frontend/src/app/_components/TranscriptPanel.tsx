@@ -6,8 +6,9 @@ import { Copy, GlobeIcon } from 'lucide-react';
 import { useTranscripts } from '@/contexts/TranscriptContext';
 import { useConfig } from '@/contexts/ConfigContext';
 import { useRecordingState } from '@/contexts/RecordingStateContext';
-import { useModalState } from '@/hooks/useModalState';
 import { usePermissionCheck } from '@/hooks/usePermissionCheck';
+import { ModalType } from '@/hooks/useModalState';
+import { useIsLinux } from '@/hooks/usePlatform';
 
 /**
  * TranscriptPanel Component
@@ -20,18 +21,20 @@ interface TranscriptPanelProps {
   // indicates stop-processing state for transcripts; derived from backend statuses.
   isProcessingStop: boolean;
   isStopping: boolean;
+  showModal: (name: ModalType, message?: string) => void;
 }
 
 export function TranscriptPanel({
   isProcessingStop,
-  isStopping
+  isStopping,
+  showModal
 }: TranscriptPanelProps) {
   // Contexts
   const { transcripts, transcriptContainerRef, copyTranscript } = useTranscripts();
   const { transcriptModelConfig } = useConfig();
   const { isRecording, isPaused } = useRecordingState();
-  const { showModal } = useModalState(transcriptModelConfig);
-  const { checkPermissions, isChecking, hasSystemAudio,hasMicrophone } = usePermissionCheck();
+  const { checkPermissions, isChecking, hasSystemAudio, hasMicrophone } = usePermissionCheck();
+  const isLinux = useIsLinux();
 
   return (
     <div ref={transcriptContainerRef} className="w-full border-r border-gray-200 bg-white flex flex-col overflow-y-auto">
@@ -73,8 +76,8 @@ export function TranscriptPanel({
         </div>
       </div>
 
-      {/* Permission Warning */}
-      {!isRecording && !isChecking && (
+      {/* Permission Warning - Not needed on Linux */}
+      {!isRecording && !isChecking && !isLinux && (
         <div className="flex justify-center px-4 pt-4">
           <PermissionWarning
             hasMicrophone={hasMicrophone}
